@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use tokio::net::TcpListener;
 use tower_http::cors::{CorsLayer, Any};
 
 #[derive(Deserialize)]
@@ -37,13 +38,16 @@ async fn login_handler(Json(payload): Json<LoginRequest>) -> Json<LoginResponse>
 async fn main() {
     let app = Router::new()
         .route("/login", post(login_handler))
-        .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any).allow_methods(Any));
+        .layer(CorsLayer::new()
+            .allow_origin(Any)
+            .allow_headers(Any)
+            .allow_methods(Any)
+        );
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let listener = TcpListener::bind(addr).await.unwrap();
+
     println!("Server running on http://{}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }

@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use tower_http::cors::{CorsLayer, Any};
 
 #[derive(Deserialize)]
 struct LoginRequest {
@@ -19,7 +20,6 @@ struct LoginResponse {
 }
 
 async fn login_handler(Json(payload): Json<LoginRequest>) -> Json<LoginResponse> {
-    // Simulasi validasi user
     if payload.username == "admin" && payload.password == "1234" {
         Json(LoginResponse {
             success: true,
@@ -35,10 +35,11 @@ async fn login_handler(Json(payload): Json<LoginRequest>) -> Json<LoginResponse>
 
 #[tokio::main]
 async fn main() {
-    // Buat router
-    let app = Router::new().route("/login", post(login_handler));
+    let app = Router::new()
+        .route("/login", post(login_handler))
+        .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any).allow_methods(Any));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     println!("Server running on http://{}", addr);
 
     axum::Server::bind(&addr)
